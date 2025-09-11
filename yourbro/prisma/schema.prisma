@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"   // vagy "mysql" ha azt használsz
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  name           String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  profile        Profile?
+  subscriptions  Subscription[]
+  plans          Plan[]
+}
+
+model Profile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  age           Int?
+  sex           String?   // "male" | "female" | "other"
+  heightCm      Int?
+  weightKg      Float?
+  activityLevel String?   // "sedentary" | "light" | "moderate" | "high"
+  goals         String?   // pl. "fogyás", "izomtömeg növelés"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Plan {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // "trial" | "workout" | "diet"
+  title       String?
+  content     Json
+  generatedAt DateTime @default(now())
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  stripeId    String   @unique    // Stripe subscription ID
+  status      String              // "trialing", "active", "canceled", stb.
+  plan        String              // "trial" | "premium" | "pro"
+  currentPeriodEnd DateTime       // Stripe-ból érkező dátum
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
